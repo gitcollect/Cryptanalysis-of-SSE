@@ -1,0 +1,55 @@
+\chapter*{Introduction}
+
+À l'heure du tout numérique, le volume de nos données ne cesse de croître au fil
+des jours, nous conduisant parfois à les externaliser et à les confier à des
+opérateurs \textit{Cloud}. Certaines de ces données, comme les documents
+juridiques, bancaires et médicaux, les brevets industriels ou plus simplement
+nos e-mails, peuvent être de nature sensible ou bien confidentielle nous
+obligeant à faire confiance à l'opérateur \textit{Cloud}.\\
+
+Afin de s'affranchir de la confiance accordée à l'opérateur \textit{Cloud}, il
+est alors important de chiffrer ces données. La solution idéale à cette
+problématique repose sur le chiffrement dit homomorphe permettant d'effectuer
+tout type d'opérations sur des données chiffrées \cite{ref7}. Malheureusement,
+elle reste actuellement de l'ordre de la recherche académique.\\
+
+Une solution possible serait de chiffrer préalablement les données à
+externaliser. Par définition, elles seront inintelligibles par l'opérateur
+\textit{Cloud} et donc inexploitables. Paradoxalement, si ces données chiffrées
+sont inintelligibles par l'opérateur \textit{Cloud}, elles le sont aussi pour
+nous. Nous serons alors dans l'impossibilité de manipuler nos propres données.
+Bien sûr, nous pourrions penser qu'il nous suffirait de télécharger toutes ces
+données chiffrées puis de les déchiffrer localement. Nous pourrions ainsi
+réaliser les opérations voulues mais cela va à l'encontre des avantages attendus
+d'un opérateur \textit{Cloud}. En effet, un des points forts d'un opérateur
+\textit{Cloud} est de nous permettre de stocker une grande quantité de données
+en ligne et donc accessible de n'importe quel endroit. Cette solution est alors
+loin d'être efficace et même parfois impraticable si le volume de données
+sauvegardées est très important.\\
+
+La solution actuelle est de déposer ces données en clair sur l'opérateur
+\textit{Cloud}. Cela nous permet de les exploiter sans aucune contrainte. Il
+est alors légitime de s'inquiéter sur la confidentialité et la sécurité de ces
+données transmises. En effet, nous ne possédons aucun contrôle sur l'opérateur
+\textit{Cloud}, ce dernier peut à tout moment consulter les données stockées,
+les dupliquer ou encore les transmettre à des tiers. De plus, nous n'avons
+aucune garantie que l'infrastructure de l'opérateur soit suffisamment sécurisée
+et qu'elle puisse ainsi empêcher toute intrusion malicieuse.\\
+
+Une autre possibilité intéressante est de se restreindre à la fonctionnalité de
+recherche sur données chiffrées. En effet, une telle solution nous permet
+d'avoir nos données en sécurité sur l'opérateur \textit{Cloud} tout en ayant la
+possiblité de récupérer les données chiffrées que nous cherchons spécifiquement.
+Cette solution est réalisable grâce aux schémas de recherches sur données
+chiffrées, dits SSE pour \textit{Searchable Symmetric Encryption}. En effet,
+ces schémas, même s'ils ne permettent pas toutes les opérations que peut offrir
+le chiffrement homomorphe, sont d'une grande utilité pour les besoins actuels
+des données hébergées dans le \textit{Cloud}.\\
+
+Nous nous intéressons dans ce mémoire à la sécurité de ces schémas SSE. Nous
+commencerons par présenter leur fonctionnement puis étudierons leur sécurité en
+définissant différents modèles. En nous appuyant sur l'article de Cash
+\textit{et al.} \cite{ref2}, nous définirons un ensemble de profils de fuite
+permettant de classifier les schémas SSE selon la quantité d'information qu'ils
+révèlent. Nous présenterons par la suite différentes attaques réalisées en
+fonction de ces profils de fuite et en donnerons les résultats.
