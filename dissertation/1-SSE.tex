@@ -1,0 +1,292 @@
+\chapter{Schémas de recherche sur données chiffrées}
+
+\begin{quote}
+{\small Apparus dans les années 2000 avec les premières applications liées au
+\textit{Cloud}, les schémas de recherche sur données chiffrées, ou plus
+simplement SSE pour \textit{Searchable Symmetric Encryption}, permettent à un
+client de stocker et de rechercher de façon confidentielle et sécurisée ses
+données en externe. Nous présentons dans ce premier chapitre le fonctionnement
+de ces schémas.}
+\end{quote}
+
+\section{Notations}
+
+Nous noterons $\Pr$ la probabilité d'un événement, $\vert v \vert$ la longueur
+d'un vecteur $v$ et $\#E$ le cardinal d'un ensemble $E$. Nous rappelons qu'une
+fonction $\mu : \mathbb{N} \rightarrow \mathbb{R}$ est dite \textit{négligeable}
+en $\lambda$ si pour tout polynôme $p$ il existe $k \in \mathbb{N}$ tel
+que $\mu(\lambda) \leqslant 1/\vert p(\lambda) \vert$ pour $\lambda > k$.
+
+\subsection{Mots-clefs et documents}
+Soit $\mathsf{W}=\{w_1,\dots,w_m\}$ un ensemble composé de $m$ mots-clefs. Nous
+noterons $\mathsf{D}=\{d_1,\dots,d_n\}$ un ensemble de $n$ documents où chaque
+document $d_i$ sera considéré comme une liste ordonnée de $\ell_i$ mots-clefs
+appartenant à $\mathsf{W}$, c'est-à-dire $d_i=(w_1,\dots,w_{\ell_i}}) \in
+\mathsf{W}^{\ell_i}$. Nous définissons, pour un ensemble documentaire
+$\mathsf{D}$, la valeur $N$ correspondant au nombre total de couples où un
+couple est composé d'un document et d'un mot-clef qu'il contient. En d'autres
+termes, $N=\# \{(d,w):d \in \mathsf{D},w \in d\}$. Nous associons également à
+chaque document $d_i$ l'ensemble noté $\mathsf{W}_i$ correspondant à l'ensemble
+des mots-clefs distincts qui le composent.\\
+
+Nous représentons par $\mathsf{D}^*=\{d_1^*,\dots,d_n^*\}$, l'ensemble des
+documents chiffrés où $d_i^*$ est le chiffré du document $d_i$. De la même
+manière, nous notons par $\mathsf{W}^*=\{w_1^*,\dots,w_m^*\}$, l'ensemble des
+mots-clefs de $\mathsf{W}$ transformés par une fonction à sens-unique où $w_i^*$
+est le transformé du mot-clef $w_i$.\\
+
+Enfin, un document chiffré $d_i^*$ sera représenté de façon unique par son
+identifiant $i$, il peut s'agir par exemple de son emplacement mémoire.
+
+\begin{remark}
+Pour simplifier les idées, nous considérons les documents comme des
+``documents textes''. Il est toutefois important de garder à l'esprit que tout
+ce qui suit fonctionne avec des documents arbitraires (e.g. des fichiers images
+ou vidéos) tant qu'ils sont indexables.
+\end{remark}
+
+\subsection{Recherches sur données chiffrées et historique}
+Soit $\mathsf{D}$ un ensemble de documents définis sur l'ensemble de mots-clefs
+$\mathsf{W}$ et $w \in \mathsf{W}$. Une recherche par le mot-clef $w$ sur les
+documents chiffrés (les éléments de $\mathsf{D}^*$) consiste à retrouver ceux
+dont les clairs contiennent $w$.
+
+\begin{defi}[Recherche sur un mot-clef]
+Soit $\mathsf{W}$ un ensemble de mots-clefs et $w \in \mathsf{W}$, $\mathsf{D}$
+un ensemble de documents définis sur $\mathsf{W}$. Nous définissons
+$\mathsf{D}^*(w)$ comme l'ensemble des identifiants des documents chiffrés de
+$\mathsf{D}^*$ dont les clairs contiennent le mot-clef $w$. C'est-à-dire
+\begin{align*}
+\mathsf{D}^*(w)=\{i:w \in \mathsf{W}_i\}
+\end{align*}
+\end{defi}
+
+Plus généralement, nous pouvons définir une recherche booléenne.
+
+\begin{defi}[Recherche booléenne]
+Soit $\mathsf{D}$ un ensemble de documents définis sur l'ensemble de mots-clefs
+$\mathsf{W}$. Soit $\bar{w} \subseteq \mathsf{W}$ un sous-ensemble de mots-clefs
+et $\phi$ une formule booléenne sur $\bar{w}$. Nous définissons $\mathsf{D}^*
+(\phi(\bar{w}))$ comme l'ensemble des identifiants des documents chiffrés dont
+les clairs vérifient la formule booléenne $\phi(\bar{w})$. C'est-à-dire
+\begin{align*}
+\mathsf{D}^*(\phi(\bar{w}))=\{i:\phi(\bar{w})=\mathsf{True}\mathrm{\ pour\ }
+\mathsf{W}_i\}
+\end{align*}
+\end{defi}
+
+\begin{exmp}
+Soit $\mathsf{D}=\{d_1,d_2\}$ un ensemble de deux documents définis sur
+$\mathsf{W}=\{w_1,w_2,w_3\}$, où $d_1=(w_1,w_2,w_3,w_1)$ et $d_2=(w_1,w_2,w_2)$.
+La recherche booléenne sur $\bar{w}=(w_1,w_3)$ définie par $\phi(\cdot)=(\cdot
+\land \cdot)$ nous donne alors $\mathsf{D}^*(\phi(\bar{w}))=1$.
+\end{exmp}
+
+\begin{remark}
+Il est à noter que certains schémas $\mathrm{SSE}$ n'autorisent que les
+recherches par mot-clef unique. Dans ce cas, nous aurons simplement $\bar{w}=
+\{w\}$ et $\phi(\bar{w})=w$. Afin de simplifier les notations et sauf mention du
+contraire, nous parlerons dans la suite de ce mémoire de recherche par mot-clef
+unique. Il est néanmoins important de se souvenir que certains schémas
+$\mathrm{SSE}$ autorisent des recherches booléennes tel le schéma de Cash
+\textit{et al.} présenté dans $\mathrm{\cite{ref9}}$.
+\end{remark}
+
+Nous définissons maintenant un historique comme la donnée d'un ensemble de
+documents et d'une liste de recherches appliquées à cet ensemble documentaire.
+
+\begin{defi}[Historique]
+Soit $\mathsf{D}=\{d_1,\dots,d_n\}$ un ensemble de $n$ documents définis sur
+$\mathsf{W}$. Un historique de $q$ recherches est un couple $H=(\mathsf{D},Q)$
+où $Q=(w_1,\dots,w_q)$ avec $w_i \in \mathsf{W}$ pour $1 \leqslant i \leqslant
+q$.
+\end{defi}
+
+\begin{exmp}
+Soit $\mathsf{D}=\{d_1,d_2\}$ un ensemble de deux documents définis sur
+$\mathsf{W}=\{w_1,w_2,w_3\}$, où $d_1=(w_2,w_1,w_1)$ et $d_2=(w_3,w_1)$. Un
+historique de deux recherches peut être donc $H=(\mathsf{D},(w_1,w_3))$.
+\end{exmp}
+
+\subsection{Bases de données chiffrées}
+
+Soit $\mathsf{D}=(d_1,\dots,d_n)$ un ensemble de $n$ documents définis sur
+$\mathsf{W}$. Nous considérons la base de données chiffrée $\mathsf{EDB}$
+associée à $\mathsf{D}$ comme une table liant l'ensemble des mots-clefs
+transformés et les identifiants des documents chiffrés. Deux représentations
+possibles pour une base de données sont présentées ci-dessous.\\
+
+La première représentation repose sur un index. Nous faisons correspondre alors
+à l'entrée $i$ de la table une liste de mots-clefs protégés (par exemple par une
+fonction pseudo-aléatoire) référençant $d_i^*$.
+
+\begin{exmp}
+Soit deux documents $d_1=(w_1,w_3,w_2)$ et $d_2=(w_2)$. En utilisant la
+représentation de la base de données chiffrée qui repose sur un index, nous
+avons
+\begin{center}
+\begin{tabular}{l}
+\multicolumn{1}{c}{$\mathsf{EDB}$} \\
+\hline
+$\mathsf{1} \leftarrow (w_1^*,w_3^*,w_2^*)$ \\
+$\mathsf{2} \leftarrow (w_2^*)$
+\end{tabular}
+\end{center}
+\end{exmp}
+
+La seconde représentation repose sur un index inversé. Celle-ci, inversement à
+la représentation via un index, associe un mot-clef transformé $w^*$ à un
+ensemble d'identifiants de documents chiffrés dont les clairs contiennent le
+mot-clef $w$, c'est-à-dire $\mathsf{D}^*(w)$.
+
+\begin{exmp}
+Soit deux documents $d_1=(w_1,w_3,w_2)$ et $d_2=(w_2)$. En utilisant la
+représentation de la base de données chiffrée qui repose sur un index inversé,
+nous avons
+\begin{center}
+\begin{tabular}{l}
+\multicolumn{1}{c}{$\mathsf{EDB}$} \\
+\hline
+$w_1^* \rightarrow \{1\}$ \\
+$w_2^* \rightarrow \{1,2\}$ \\
+$w_3^* \rightarrow \{1\}$
+\end{tabular}
+\end{center}
+\end{exmp}
+
+\begin{remark}
+Dans la suite, quand cela ne sera pas précisé, nous parlerons indifféremment
+d'une base de données chiffrée reposant sur un index et d'une base de données
+chiffrée reposant sur un index inversé.
+\end{remark}
+
+\section{Schémas de recherche statiques et dynamiques}
+
+Nous rappelons qu'un schéma SSE fait intervenir un client et un serveur. Le
+client possède un ensemble de documents sensibles qu'il souhaite chiffrer puis
+exporter sur un serveur, de telle sorte que le serveur devra être capable
+d'effectuer des recherches sur ces données chiffrées et retourner les
+identifiants des documents chiffrés correspondant à la recherche initialement
+donnée par le client. Un schéma SSE peut être statique ou bien dynamique. Un
+schéma dynamique permet en plus d'initialiser une base de données chiffrée sur
+le serveur, de la mettre à jour en ajoutant et/ou en enlevant certains documents
+de manière consistante avec la fonction de recherche.
+
+\subsection{Schémas de recherche statiques}
+La première grande famille des schémas SSE est composée des schémas SSE dits
+statiques. Ceux-là sont très utiles pour archiver un ensemble de documents qui
+n'est pas appelé à être modifié par la suite.
+
+\begin{defi}[Schéma statique]
+Un schéma $\mathrm{SSE}$ statique $\mathsf{\Pi}$ de paramètre de sécurité
+$\lambda$ est déterminé par un algorithme $\mathsf{\Pi}.\mathsf{Setup}$ et un
+protocole $\mathsf{\Pi}.\mathsf{Search}$ où\\
+\begin{quote}
+\begin{itemize}
+\item L'algorithme $\mathsf{\Pi}.\mathsf{Setup}$ prend en entrée le paramètre de
+sécurité $\lambda$ et un ensemble de documents $\mathsf{D}$ définis sur
+$\mathsf{W}$. Il génère une clef secrète $K_\lambda$ destinée au client
+conduisant à la construction de la base de données chiffrée $\mathsf{EDB}$ et à
+l'ensemble de documents chiffrés $\mathsf{D}^*$ à destination du serveur.
+\begin{displaymath}
+(K_\lambda,\mathsf{EDB},\mathsf{D}^*) \leftarrow \mathsf{\Pi}.\mathsf{Setup}
+(\lambda,\mathsf{D})
+\end{displaymath}
+\item Le protocole $\mathsf{\Pi}.\mathsf{Search}$ prend en entrée la clef
+secrète $K_\lambda$, un mot-clef $w \in \mathsf{W}$ et la base de données
+chiffrée $\mathsf{EDB}$. La recherche par le mot-clef $w$ sera protégée à l'aide
+de la clef $K_\lambda$ puis envoyée au serveur hébergeant la base de données
+chiffrée. Le protocole se termine en retournant $\mathsf{D}^*(w)$ au client.
+\begin{displaymath}
+\mathsf{D}^*(w) \leftarrow \mathsf{\Pi}.\mathsf{Search}(K_\lambda,w,\mathsf{EDB})
+\end{displaymath}
+\end{itemize}
+\end{quote}
+\end{defi}
+
+Intuitivement, nous disons qu'un schéma SSE statique $\mathsf{\Pi}$ est correct
+si son protocole de recherche $\mathsf{\Pi}.\mathsf{Search}$ retourne l'ensemble
+$\mathsf{D}^*(w)$ pour une recherche par le mot-clef $w$. Nous formalisons cette
+notion par la définition ci-dessous.
+
+\begin{defi}[Schéma de recherche statique correct]
+Soit $\mathcal{A}$ un algorithme polynomial et probabiliste, et $\mathsf{\Pi}$
+un schéma $\mathrm{SSE}$ statique de paramètre de sécurité $\lambda$. Nous
+considérons l'expérience $\mathsf{CorSta}_\mathcal{A}^\mathsf{\Pi}(\lambda)$
+présentée dans la figure \ref{corsta}.\\
+Nous dirons que $\mathsf{\Pi}$ est correct si pour tout algorithme polynomial et
+probabiliste $\mathcal{A}$
+\begin{displaymath}
+\Pr\left[\mathsf{CorSta}_\mathcal{A}^\mathsf{\Pi}(\lambda)=1\right] \leqslant
+\mu(\lambda)
+\end{displaymath}
+où $\mu$ est une fonction négligeable en $\lambda$.
+\end{defi}
+
+\begin{figure}[h]
+\centering
+\begin{algorithm}[H]
+$H \leftarrow \mathcal{A}(1^\lambda)$, $H=(\mathsf{D},Q)$ \;
+$(K_\lambda,\mathsf{EDB},\mathsf{D}^*) \leftarrow \mathsf{\Pi}.\mathsf{Setup}
+(\lambda,\mathsf{D})$ \;
+\BlankLine
+\For{$1 \leqslant i \leqslant q$}{
+$\textsc{v}[i] \leftarrow \mathsf{\Pi}.\mathsf{Search}(K_\lambda,Q[i],
+\mathsf{EDB})$ \;}
+\BlankLine
+\If{$\textsc{v}\not=(\mathsf{D}^*(Q[1]),\dots,\mathsf{D}^*(Q[q]))$}
+{\textbf{retourner} $1$ \;}
+\Else{\textbf{retourner} $0$\;}
+\end{algorithm}
+\caption{Expérience $\mathsf{CorSta}_\mathcal{A}^\mathsf{\Pi}(\lambda)$.}
+\label{corsta}
+\end{figure}
+
+\subsection{Schémas de recherche dynamiques}
+Contrairement aux schémas SSE statiques où le client ne peut qu'effectuer des
+recherches sur des données chiffrées, les schémas SSE dynamiques permettent
+également au serveur d'ajouter et de supprimer des documents à la base de
+données chiffrée et ainsi de la mettre à jour de manière consistante avec le
+protocole de recherche.
+
+\begin{defi}[Schéma de recherche dynamique]
+Un schéma $\mathrm{SSE}$ dynamique $\mathsf{\Pi}$ est défini de la même façon
+qu'un schéma $\mathrm{SSE}$ statique mais possède en plus un protocole
+$\mathsf{\Pi}.\mathsf{Update}$ où
+\begin{quote}
+Le protocole $\mathsf{\Pi}.\mathsf{Update}$ prend en entrée la base de données
+chiffrée $\mathsf{EDB}$, la clef secrète du client $K_\lambda$, une opération de
+mise à jour $\mathsf{op} \in \{\mathsf{add},\mathsf{del},\mathsf{edit^+},
+\mathsf{edit^-}\}$, un document $d$ ainsi qu'un ensemble de mots-clefs
+$\mathsf{W}_0$. L'opération de mise à jour, le document $d$ et l'ensemble de
+mots-clefs $\mathsf{W}_0$ seront protégés à l'aide de la clef secrète du client
+et envoyés au serveur. Le protocole met alors à jour la base de données chiffrée
+et retourne $\mathsf{EDB'}$ au serveur.
+\begin{align*}
+\mathsf{EDB'} \leftarrow
+\mathsf{Update}(\mathsf{EDB},K_\lambda,\mathsf{op},d,\mathsf{W}_0)
+\end{align*}
+\end{quote}
+\end{defi}
+
+Précisons l'effet des opérations.
+\begin{itemize}
+\item L'opération $\mathsf{add}$ associée au document $d$ et à un ensemble de
+mots-clefs $\mathsf{W}_0$ permet au serveur d'ajouter $d^*$ à $\mathsf{D}^*$ et
+de le référencer aux mots-clefs protégés de $\mathsf{W}_0$ dans la base de
+données chiffrée.
+\item De la même manière, l'opération $\mathsf{del}$ permet au serveur de
+supprimer $d^*$ mais également de ne plus le référencer aux mots-clefs protégés
+$\mathsf{W}_0^*$ dans la base de données chiffrée.
+\item Les opérations $\mathsf{edit^+}$ et $\mathsf{edit^-}$ permettent au
+serveur de modifier le référencement de $d^*$ en lui associant les mots-clefs
+protégés de $\mathsf{W}_0$ via l'opération $\mathsf{edit^+}$ ou en les enlevant
+avec l'opération $\mathsf{edit^-}$.
+\end{itemize}
+
+\begin{remark}
+Si la définition d'un schéma dynamique correct est conceptuellement simple, sa
+formalisation est plus délicate puisqu'il faut s'assurer que dans le jeu de
+sécurité que tout se passe bien quelque soit l'enchaînement des recherches et
+des opération de mise à jour.
+\end{remark}
